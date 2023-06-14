@@ -177,6 +177,8 @@ struct tuntap
 #define TUNNEL_TOPOLOGY(tt) ((tt) ? ((tt)->topology) : TOP_UNDEF)
     int topology; /* one of the TOP_x values */
 
+    bool is_pipe;
+    pid_t pipe_pid;
     bool did_ifconfig_setup;
     bool did_ifconfig_ipv6_setup;
 
@@ -189,6 +191,7 @@ struct tuntap
     /* ifconfig parameters */
     in_addr_t local;
     in_addr_t remote_netmask;
+    int mtu;
 
     struct in6_addr local_ipv6;
     struct in6_addr remote_ipv6;
@@ -314,11 +317,10 @@ void do_ifconfig_setenv(const struct tuntap *tt,
  *
  * @param tt        the tuntap interface context
  * @param ifname    the human readable interface name
- * @param mtu       the MTU value to set the interface to
  * @param es        the environment to be used when executing the commands
  * @param ctx       the networking API opaque context
  */
-void do_ifconfig(struct tuntap *tt, const char *ifname, int tun_mtu,
+void do_ifconfig(struct tuntap *tt, const char *ifname,
                  const struct env_set *es, openvpn_net_ctx_t *ctx);
 
 /**

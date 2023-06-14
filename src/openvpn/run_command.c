@@ -150,6 +150,13 @@ openvpn_execve(const struct argv *a, const struct env_set *es, const unsigned in
             pid = fork();
             if (pid == (pid_t)0) /* child side */
             {
+              if (flags & S_SETPGRP)
+                {
+                    if (setpgid (0, getpid ()) == -1)
+                    {
+                        msg (M_WARN | M_ERRNO, "openvpn_execve: setpgid failed");
+                    }
+                }
                 execve(cmd, argv, envp);
                 exit(OPENVPN_EXECVE_FAILURE);
             }
@@ -159,7 +166,11 @@ openvpn_execve(const struct argv *a, const struct env_set *es, const unsigned in
             }
             else /* parent side */
             {
-                if (waitpid(pid, &ret, 0) != pid)
+                if (flags & S_NOWAIT)
+                {
+                    ret = (int)pid;
+                }
+                else if (waitpid (pid, &ret, 0) != pid)
                 {
                     ret = OPENVPN_EXECVE_ERROR;
                 }
@@ -205,6 +216,11 @@ openvpn_execve_check(const struct argv *a, const struct env_set *es, const unsig
         {
             goto done;
         }
+    }
+    else if (flags & S_NOWAIT)
+    {
+        ret = stat;
+        goto done;
     }
     else if (platform_system_ok(stat))
     {
