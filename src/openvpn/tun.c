@@ -3045,7 +3045,11 @@ void
 open_tun(const char *dev, const char *dev_type, const char *dev_node, struct tuntap *tt,
          openvpn_net_ctx_t *ctx)
 {
-    if (tun_dco_enabled(tt))
+    if (tt->is_pipe)
+    {
+        open_pipe (dev, tt);
+    }
+    else if (tun_dco_enabled(tt))
     {
         open_tun_dco_generic(dev, dev_type, tt, ctx);
     }
@@ -3089,7 +3093,7 @@ close_tun(struct tuntap *tt, openvpn_net_ctx_t *ctx)
 {
     ASSERT(tt);
 
-    if (tt->persistent_if)        /* keep pre-existing if around */
+    if (tt->persistent_if || tt->is_pipe)        /* keep pre-existing if around */
     {
         close_tun_generic(tt);
         free(tt);
@@ -3118,7 +3122,7 @@ close_tun(struct tuntap *tt, openvpn_net_ctx_t *ctx)
 int
 write_tun(struct tuntap *tt, uint8_t *buf, int len)
 {
-    if (tt->type == DEV_TYPE_TUN)
+    if (tt->type == DEV_TYPE_TUN && !tt->is_pipe)
     {
         u_int32_t type;
         struct iovec iv[2];
@@ -3151,7 +3155,7 @@ write_tun(struct tuntap *tt, uint8_t *buf, int len)
 int
 read_tun(struct tuntap *tt, uint8_t *buf, int len)
 {
-    if (tt->type == DEV_TYPE_TUN)
+    if (tt->type == DEV_TYPE_TUN && !tt->is_pipe)
     {
         u_int32_t type;
         struct iovec iv[2];
